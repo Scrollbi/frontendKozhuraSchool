@@ -91,7 +91,7 @@ export default function HomePage() {
               {infoBlocks.map((b) => (
                 <div
                   key={b.n}
-                  className="glass-info-cell relative flex w-full cursor-default flex-col items-center justify-center gap-3 px-4 py-5 text-center sm:px-5 sm:py-6 lg:w-[calc(33.333%-10px)] lg:flex-none lg:px-3 lg:py-4"
+                  className="glass-info-cell relative flex w-full cursor-default flex-col items-center justify-start gap-3 px-4 py-5 text-center sm:px-5 sm:py-6 lg:w-[calc(33.333%-10px)] lg:flex-none lg:px-3 lg:py-4"
                 >
                   <div className="flex items-center justify-center gap-2.5">
                     <span className="flex h-[28px] w-[28px] shrink-0 items-center justify-center rounded-md bg-kozhura-orange text-[11px] font-bold text-white shadow-sm">
