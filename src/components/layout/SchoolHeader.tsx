@@ -5,6 +5,7 @@ interface SchoolHeaderProps {
   go: (route: string) => void
   route: string
   currentUser: UserMe | null
+  onOpenAuth: (mode?: 'login' | 'register') => void
 }
 
 const nav = [
@@ -14,10 +15,10 @@ const nav = [
   { label: 'Работодателям', href: 'employers' },
 ] as const
 
-export default function SchoolHeader({ go, route, currentUser }: SchoolHeaderProps) {
+export default function SchoolHeader({ go, route, currentUser, onOpenAuth }: SchoolHeaderProps) {
   const openProfile = () => {
     if (currentUser) go('profile')
-    else go('login')
+    else onOpenAuth('login')
   }
 
   return (
@@ -39,7 +40,9 @@ export default function SchoolHeader({ go, route, currentUser }: SchoolHeaderPro
                   type="button"
                   onClick={() => go(item.href)}
                   className={`transition hover:text-kozhura-orange ${
-                    route === item.href || (item.href === 'news' && route.startsWith('news/'))
+                    route === item.href ||
+                    (item.href === 'news' && route.startsWith('news/')) ||
+                    (item.href === 'jobs' && route.startsWith('jobs'))
                       ? 'font-semibold text-kozhura-orange'
                       : 'font-light'
                   }`}
@@ -56,7 +59,7 @@ export default function SchoolHeader({ go, route, currentUser }: SchoolHeaderPro
             type="button"
             className="flex h-9 w-9 items-center justify-center rounded-full text-zinc-800 transition hover:bg-zinc-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-kozhura-orange"
             aria-label="Уведомления"
-            onClick={() => (currentUser ? go('notifications') : go('login'))}
+            onClick={() => (currentUser ? go('notifications') : onOpenAuth('login'))}
           >
             <EnvelopeIcon />
           </button>

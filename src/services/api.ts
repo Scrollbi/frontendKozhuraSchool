@@ -73,6 +73,24 @@ export async function loginRequest(username: string, password: string): Promise<
   return data
 }
 
+export interface RegisterPayload {
+  email: string
+  name: string
+  surname: string
+  password: string
+}
+
+/** Регистрация (POST /users/register). Возвращает UserMinimal; дальше нужен отдельный login для токена. */
+export async function registerRequest(payload: RegisterPayload): Promise<UserMinimal> {
+  const { data } = await apiClient.post<UserMinimal>('/users/register', {
+    email: payload.email.trim(),
+    name: payload.name.trim(),
+    surname: payload.surname.trim(),
+    password: payload.password,
+  })
+  return data
+}
+
 export async function fetchMe(): Promise<UserMeResponse> {
   const { data } = await apiClient.get<UserMeResponse>('/users/me')
   return data
@@ -86,4 +104,167 @@ export function publicFileUrl(path: string): string {
   const trimmed = path.replace(/^\/+/, '')
   const normalized = trimmed.startsWith('public/') ? trimmed.slice('public/'.length) : trimmed
   return `/files/public/${normalized}`
+}
+
+// —— Вакансии и отклики (бэкенд: /jobs, /applications, /company_requests) ——
+
+export interface CompanyUserPublic {
+  id: number
+  name: string
+  surname: string
+  avatar: FilePublic | null
+  avatar_full: FilePublic | null
+  company_description: string | null
+  company_extra: string | null
+  company_video: string | null
+}
+
+export interface CourseMinimal {
+  id: number
+  title: string
+  description: string
+  is_practical: boolean
+  request_available: boolean
+  is_visible: boolean
+  cost: number | null
+  video_url: string | null
+  category: { id: number; name: string }
+  rating: number | null
+}
+
+export interface JobPublic {
+  id: number
+  title: string
+  salary_min: number
+  salary_max: number
+  employment_type: string
+  description: string
+  is_visible: boolean
+  company_id: number
+  created_at: string
+  company: CompanyUserPublic
+  courses: CourseMinimal[]
+}
+
+export interface JobCreatePayload {
+  title: string
+  salary_min: number
+  salary_max: number
+  employment_type: string
+  description: string
+  is_visible: boolean
+}
+
+export interface UserForApplication extends UserMinimal {
+  email: string
+  courses: CourseMinimal[]
+  cv_text?: string | null
+}
+
+export interface ApplicationWithUser {
+  id: number
+  user_id: number
+  job_id: number
+  accepted: boolean | null
+  message: string | null
+  created_at: string
+  user: UserForApplication
+}
+
+export interface CompanyCardPublic extends UserMinimal {
+  avatar_full: FilePublic | null
+  company_description: string
+  company_extra: string | null
+  company_video: string
+  free_courses: CourseMinimal | null
+  paid_courses: CourseMinimal | null
+}
+
+/** Дополняет карточки с API компаниями из вакансий, если витрина пустая или не все работодатели попали в /company_cards. */
+export function mergeCompanyCardsWithJobs(
+  cards: CompanyCardPublic[],
+  jobsList: JobPublic[],
+): CompanyCardPublic[] {
+  const map = new Map<number, CompanyCardPublic>()
+  for (const c of cards) map.set(c.id, c)
+  for (const j of jobsList) {
+    if (map.has(j.company_id)) continue
+    const co = j.company
+    const desc =
+      (co.company_description?.trim() || `${co.surname} ${co.name}`.trim()) || 'Компания'
+    map.set(j.company_id, {
+      id: co.id,
+      name: co.name,
+      surname: co.surname,
+      avatar: co.avatar,
+      avatar_full: co.avatar_full,
+      company_description: desc,
+      company_extra: co.company_extra ?? null,
+      company_video: co.company_video ?? 'https://example.com/',
+      free_courses: null,
+      paid_courses: null,
+    })
+  }
+  return [...map.values()]
+}
+
+export interface ApplicationPublic {
+  id: number
+  user_id: number
+  job_id: number
+  accepted: boolean | null
+  message: string | null
+  created_at: string
+  user: UserForApplication
+  job: {
+    id: number
+    title: string
+    salary_min: number
+    salary_max: number
+    employment_type: string
+    description: string
+    is_visible: boolean
+    company_id: number
+    created_at: string
+  }
+}
+
+export async function fetchCompanyCards(): Promise<CompanyCardPublic[]> {
+  const { data } = await apiClient.get<CompanyCardPublic[]>('/company_requests/company_cards')
+  return data
+}
+
+export async function fetchJobs(): Promise<JobPublic[]> {
+  const { data } = await apiClient.get<JobPublic[]>('/jobs/')
+  return data
+}
+
+export async function fetchJob(jobId: number): Promise<JobPublic> {
+  const { data } = await apiClient.get<JobPublic>(`/jobs/${jobId}/`)
+  return data
+}
+
+export async function fetchJobApplications(jobId: number): Promise<ApplicationWithUser[]> {
+  const { data } = await apiClient.get<ApplicationWithUser[]>(`/jobs/${jobId}/applications/`)
+  return data
+}
+
+export async function createJob(payload: JobCreatePayload): Promise<JobPublic> {
+  const { data } = await apiClient.post<JobPublic>('/jobs/', payload)
+  return data
+}
+
+export async function fetchApplication(applicationId: number): Promise<ApplicationPublic> {
+  const { data } = await apiClient.get<ApplicationPublic>(`/applications/${applicationId}`)
+  return data
+}
+
+export async function acceptApplication(applicationId: number): Promise<ApplicationPublic> {
+  const { data } = await apiClient.put<ApplicationPublic>(`/applications/${applicationId}/accept`, {})
+  return data
+}
+
+export async function rejectApplication(applicationId: number): Promise<ApplicationPublic> {
+  const { data } = await apiClient.put<ApplicationPublic>(`/applications/${applicationId}/reject`, {})
+  return data
 }

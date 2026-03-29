@@ -8,6 +8,23 @@ export interface UserMe {
   roles: { role: string }[]
 }
 
+/** Приводит ответ /users/me к объекту для кэша (роли могут приходить в разном виде). */
+export function normalizeUserMe(raw: {
+  id: number
+  email: string
+  name: string
+  surname: string
+  roles?: unknown
+}): UserMe {
+  return {
+    id: raw.id,
+    email: raw.email,
+    name: raw.name,
+    surname: raw.surname,
+    roles: Array.isArray(raw.roles) ? (raw.roles as UserMe['roles']) : [],
+  }
+}
+
 function dispatchAuthChange() {
   window.dispatchEvent(new Event('authChange'))
 }

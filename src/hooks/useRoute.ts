@@ -1,8 +1,12 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 
 export function useRoute() {
   const get = () => (location.hash.startsWith('#/') ? location.hash.slice(2) : 'home')
   const [route, setRoute] = useState(get())
+  const go = useCallback((r: string) => {
+    window.location.hash = `#/${r}`
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }, [])
   useEffect(() => {
     const onHash = () => {
       const newRoute = get()
@@ -15,11 +19,5 @@ export function useRoute() {
     window.addEventListener('hashchange', onHash)
     return () => window.removeEventListener('hashchange', onHash)
   }, [])
-  return [
-    route,
-    (r: string) => {
-      window.location.hash = `#/${r}`
-      window.scrollTo({ top: 0, behavior: 'smooth' })
-    },
-  ] as const
+  return [route, go] as const
 }

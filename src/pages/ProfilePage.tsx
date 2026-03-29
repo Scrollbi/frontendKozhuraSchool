@@ -1,37 +1,51 @@
 import { useEffect, useState } from 'react'
 import { fetchMe } from '../services/api'
-import { authService, type UserMe } from '../services/authService'
+import { getApiErrorMessage } from '../services/apiErrors'
+import { authService, normalizeUserMe, type UserMe } from '../services/authService'
 
-export default function ProfilePage({ go }: { go: (route: string) => void }) {
-  const [user, setUser] = useState<UserMe | null>(() => authService.getCachedUser())
+export default function ProfilePage({
+  go,
+  onOpenLogin,
+}: {
+  go: (route: string) => void
+  onOpenLogin: () => void
+}) {
+  const [user, setUser] = useState<UserMe | null>(() =>
+    authService.isAuthenticated() ? authService.getCachedUser() : null,
+  )
+  const [loadError, setLoadError] = useState<string | null>(null)
 
   useEffect(() => {
     if (!authService.isAuthenticated()) {
-      go('login')
+      onOpenLogin()
       return
     }
+    setLoadError(null)
     void fetchMe()
       .then((me) => {
-        const minimal: UserMe = {
-          id: me.id,
-          email: me.email,
-          name: me.name,
-          surname: me.surname,
-          roles: Array.isArray(me.roles) ? (me.roles as UserMe['roles']) : [],
-        }
+        const minimal = normalizeUserMe(me)
         authService.setCachedUser(minimal)
         setUser(minimal)
       })
-      .catch(() => {
+      .catch((err) => {
         authService.logout()
-        go('login')
+        setLoadError(getApiErrorMessage(err))
+        onOpenLogin()
       })
-  }, [go])
+  }, [onOpenLogin])
+
+  if (!authService.isAuthenticated()) {
+    return (
+      <div className="mx-auto max-w-lg px-4 py-16 text-center">
+        <p className="text-kozhura-text">Войдите, чтобы открыть профиль.</p>
+      </div>
+    )
+  }
 
   if (!user) {
     return (
       <div className="px-4 py-20 text-center text-kozhura-text">
-        <p>Загрузка профиля…</p>
+        <p>{loadError ?? 'Загрузка профиля…'}</p>
       </div>
     )
   }
