@@ -22,7 +22,7 @@ export default function JobsShell({
     <div className="mx-auto w-full max-w-[1440px] px-4 pb-16 pt-6 sm:px-8 lg:px-[106px] lg:pt-10">
       <div className="flex w-full items-start justify-between gap-3">
         <div className="w-11 shrink-0 sm:w-12" aria-hidden />
-        <div className="flex min-w-0 flex-1 justify-center gap-8 sm:gap-12 md:gap-16">
+        <div className="flex min-w-0 flex-1 justify-center gap-6 sm:gap-10 md:gap-14">
           <button
             type="button"
             onClick={() => go('jobs')}

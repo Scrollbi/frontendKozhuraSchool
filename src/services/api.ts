@@ -36,6 +36,40 @@ export interface CoursePublic {
   video_url: string
   company: UserMinimal | null
   category: { id: number; name: string }
+  /** Поля из полного CoursePublic бэкенда (для страницы «Курсы») */
+  author?: UserMinimal
+  mentors?: UserMinimal[]
+  rating?: number | null
+  max_users?: number | null
+  users_count?: number | null
+  completed_users?: number
+}
+
+export interface CategoryDto {
+  id: number
+  name: string
+}
+
+export interface CourseCreatePayload {
+  title: string
+  description: string
+  is_practical: boolean
+  request_available: boolean
+  is_visible: boolean
+  cost: number | null
+  max_users: number | null
+  video_url: string
+  company_id: number | null
+  category_id: number
+}
+
+export type CourseUpdatePayload = Partial<CourseCreatePayload>
+
+export interface UserListItem {
+  id: number
+  name: string
+  surname: string
+  email: string
 }
 
 export interface NewsPublic {
@@ -50,6 +84,47 @@ export interface NewsPublic {
 export async function fetchCourses(): Promise<CoursePublic[]> {
   // завершающий / чтобы FastAPI не отдавал 307 на абсолютный URL бэкенда (ломает CORS через Vite proxy)
   const { data } = await apiClient.get<CoursePublic[]>('/courses/')
+  return data
+}
+
+export async function fetchCategories(): Promise<CategoryDto[]> {
+  const { data } = await apiClient.get<CategoryDto[]>('/categories/')
+  return data
+}
+
+export async function createCategory(name: string): Promise<CategoryDto> {
+  const { data } = await apiClient.post<CategoryDto>('/categories/', { name: name.trim() })
+  return data
+}
+
+export async function updateCategory(categoryId: number, name: string): Promise<CategoryDto> {
+  const { data } = await apiClient.patch<CategoryDto>(`/categories/${categoryId}`, { name: name.trim() })
+  return data
+}
+
+export async function createCourse(payload: CourseCreatePayload): Promise<CoursePublic> {
+  const { data } = await apiClient.post<CoursePublic>('/courses/', payload)
+  return data
+}
+
+export async function updateCourse(courseId: number, payload: CourseUpdatePayload): Promise<CoursePublic> {
+  const { data } = await apiClient.patch<CoursePublic>(`/courses/${courseId}`, payload)
+  return data
+}
+
+export async function patchCourseMentors(courseId: number, mentorIds: number[]): Promise<CoursePublic> {
+  const { data } = await apiClient.patch<CoursePublic>(`/courses/${courseId}/mentors`, mentorIds)
+  return data
+}
+
+/** Компании и кураторы — требуют роль автора/ментора (как на бэкенде). */
+export async function fetchUsersByRole(
+  role: 'company' | 'mentor',
+  query?: string,
+): Promise<UserListItem[]> {
+  const { data } = await apiClient.get<UserListItem[]>('/users/', {
+    params: { role, limit: 200, ...(query ? { query } : {}) },
+  })
   return data
 }
 

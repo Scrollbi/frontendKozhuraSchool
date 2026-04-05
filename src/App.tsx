@@ -8,6 +8,7 @@ import FlyingAirplanes from './components/airplanes/Airplanes'
 import HomePage from './pages/HomePage'
 import NewsPage from './pages/NewsPage'
 import NewsDetailPage from './pages/NewsDetailPage'
+import CoursesPage from './pages/CoursesPage'
 import PlaceholderPage from './pages/PlaceholderPage'
 import JobsPage from './pages/JobsPage'
 import ProfilePage from './pages/ProfilePage'
@@ -70,7 +71,8 @@ export default function App() {
     if (newsDetail) return <NewsDetailPage id={Number(newsDetail[1])} go={go} />
     if (route === 'news') return <NewsPage go={go} />
     if (route === 'jobs' || route.startsWith('jobs/')) return <JobsPage route={route} go={go} />
-    if (route === 'courses' || route === 'employers' || route === 'notifications') {
+    if (route === 'courses') return <CoursesPage />
+    if (route === 'employers' || route === 'notifications') {
       return <PlaceholderPage title={titleForRoute(route)} />
     }
     return <HomePage />
